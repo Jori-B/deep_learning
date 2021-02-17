@@ -8,7 +8,6 @@ from os import path
 FILESIZE = 224
 #expand2square will padd the image with black pixels until it is square
 def expand2square(pil_img, background_color):
-
     width, height = pil_img.size
     if width == height:
         return pil_img
@@ -51,5 +50,6 @@ def main():
     # print(train_sample_arr.shape)
     # train_sample_arr = np.ndarray(train_sample_arr) #.astype("object")
     np.save('Data/training.npy', train_sample_arr)
+
 if __name__ == "__main__":
     main()
