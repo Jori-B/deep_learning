@@ -16,7 +16,7 @@ def main():
     num_epoch = 100
 
     train_ds = tf.keras.preprocessing.image_dataset_from_directory(
-        str('deep_learning/Data'),
+        str('PokemonData'),
         validation_split=0.2,  # Fraction of the training data to be used as validation data.
         subset="training",
         seed=123,
@@ -37,28 +37,21 @@ def main():
         print(image_batch.shape)
         print(labels_batch.shape)
         break
-
-    # Resnet 50
-    feature_extractor_model = "https://tfhub.dev/tensorflow/resnet_50/feature_vector/1"  # @param {type:"string"}
-    feature_extractor_layer = hub.KerasLayer(
-        # trainable = False freezes the variables in feature extractor layer,
-        # so that the training only modifies the new classifier layer.
-        feature_extractor_model, input_shape=(224, 224, 3), trainable=False)
-
-    # It returns a 1280-length vector for each image:
-    feature_batch = feature_extractor_layer(image_batch)
-    print(feature_batch.shape)
-
     # Attach a classification head
     num_classes = len(class_names)
 
-    # Now wrap the hub layer in a tf.keras.Sequential model
     model = tf.keras.Sequential([
-        feature_extractor_layer,
+        tf.keras.layers.Conv1D(filters=64, kernel_size=4, activation='relu', input_shape=(224, 224, 3)),
+        tf.keras.layers.Conv1D(filters=32, kernel_size=4, activation='relu'),
+        tf.keras.layers.Conv1D(filters=16, kernel_size=4, activation='relu'),
+        tf.keras.layers.AveragePooling2D(pool_size = 2, strides = 2),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(512, activation='relu'),
+        tf.keras.layers.Dense(256, activation='relu'),
+        tf.keras.layers.Dense(128, activation='relu'),
         tf.keras.layers.Dense(num_classes)  # add a new classification layer.
     ])
-
-    model.summary()
+    #model.summary()
 
     predictions = model(image_batch)
     predictions.shape
@@ -88,14 +81,15 @@ def main():
     plt.xlabel("Training Steps")
     plt.ylim([0, 2])
     plt.plot(batch_stats_callback.batch_losses)
-    plt.savefig('Loss_headless.png')
+    plt.savefig('Loss.png')
+
 
     plt.figure()
     plt.ylabel("Accuracy")
     plt.xlabel("Training Steps")
     plt.ylim([0, 1])
     plt.plot(batch_stats_callback.batch_acc)
-    plt.savefig('Accuracy_headless.png')
+    plt.savefig('Accuracy.png')
 
     predicted_batch = model.predict(image_batch)
     predicted_id = np.argmax(predicted_batch, axis=-1)
@@ -109,7 +103,7 @@ def main():
         plt.title(predicted_label_batch[n].title())
         plt.axis('off')
     _ = plt.suptitle("Model predictions")
-    plt.savefig('predicted_images_headless.png')
+    plt.savefig('predicted_images.png')
 
 
 if __name__ == "__main__":
